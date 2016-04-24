@@ -8,7 +8,7 @@
   }],
   "require": {
     "php": ">= 5.5",
-    "curl/curl": "^1.2"
+    "zendframework/zend-soap": "@stable"
   },
   "autoload": {
     "psr-4": {
