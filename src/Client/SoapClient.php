@@ -1,142 +1,109 @@
 <?php
 
-namespace Plenty\Api\Client;
+namespace Inkl\PlentyApi\Client;
 
-use Core\Config\Config\AppConfig;
-use League\Flysystem\Exception;
-use rock\cache\CacheInterface;
 use Zend\Soap\Client;
 
-class SoapClient implements ClientInterface {
+class SoapClient implements ClientInterface
+{
+	/** @var Client */
+	private $zendSoapClient;
+	private $wsdl;
+	private $username;
+	private $password;
+	private $userId;
+	private $userToken;
+	private $maxCallTries = 5;
 
-    /** @var Client */
-    private $zendSoapClient;
-	/** @var CacheInterface */
-	private $cache;
-	/** @var AppConfig */
-	private $appConfig;
-
-	/**
-	 * Soap constructor.
-	 * @param AppConfig $appConfig
-	 * @param CacheInterface $cache
-	 */
-    public function __construct(AppConfig $appConfig, CacheInterface $cache)
+	public function __construct($wsdl, $username, $password)
 	{
-
-		$this->appConfig = $appConfig;
-		$this->cache = $cache;
-
-		$this->zendSoapClient = new Client($appConfig->get('plenty/api/wsdl'));
-
-		$this->authenticate();
+		$this->wsdl = $wsdl;
+		$this->username = $username;
+		$this->password = $password;
 	}
 
-
-    protected function authenticate() {
-
+	public function connect($userId = '', $userToken = '')
+	{
+		$this->zendSoapClient = new Client($this->wsdl);
+		$this->userId = $userId;
+		$this->userToken = $userToken;
 		$this->setSoapHeader();
+	}
 
-        try {
-            $this->call('GetServerTime');
-        } catch (\Exception $e) {
+	public function getUserId()
+	{
+		return $this->userId;
+	}
 
-            if (preg_match('/(token required|invalid token)/is', $e->getMessage())) {
-                $this->updateCredentials();
+	public function getUserToken()
+	{
+		return $this->userToken;
+	}
 
-				$this->setSoapHeader();
-            }
-
-        }
-    }
-
-
-    protected function updateCredentials() {
-
-        $result = $this->zendSoapClient->call('GetAuthentificationToken', [
-            [
-                'Username' => $this->appConfig->get('plenty/api/username'),
-                'Userpass' => $this->appConfig->get('plenty/api/password')
-            ]
+	private function auth()
+	{
+		$result = $this->zendSoapClient->call('GetAuthentificationToken', [
+			[
+				'Username' => $this->username,
+				'Userpass' => $this->password
+			]
 		]);
+		if (!isset($result->Token) || $result->Token == '') throw new \Exception('token could not be fetched (maybe call limit)');
+		$this->userId = (string)$result->UserID;
+		$this->userToken = (string)$result->Token;
+		$this->setSoapHeader();
+	}
 
-		if (isset($result->Token) && $result->Token != '') {
-			$this->cache->set('plenty.soap.token', (string)$result->Token, 86400);
-			$this->cache->set('plenty.soap.user_id', (string)$result->UserID, 86400);
-		} else {
-			throw new \Exception('token could not be fetched (maybe call limit)');
-		}
-
-    }
-
-
-	protected function setSoapHeader() {
-
+	private function setSoapHeader()
+	{
 		$header = [
-			'UserID' => $this->cache->get('plenty.soap.user_id'),
-			'Token' => $this->cache->get('plenty.soap.token')
+			'UserID' => $this->userId,
+			'Token' => $this->userToken
 		];
-
 		$soapVars = new \SoapVar($header, SOAP_ENC_OBJECT);
 		$soapHeader = new \SoapHeader('Authentification', 'verifyingToken', $soapVars, false);
-
 		$this->zendSoapClient
 			->resetSoapInputHeaders()
 			->addSoapInputHeader($soapHeader, true);
 	}
 
-
-    public function call($method, $params = []) {
-
-		$tries = 10;
-		for ($i=0;$i<=$tries; $i++)
+	public function call($method, $params = [])
+	{
+		for ($i = 1; $i <= $this->maxCallTries; $i++)
 		{
 			try
 			{
 				return $this->zendSoapClient->call($method, [$params]);
 			} catch (\Exception $e)
 			{
-				$message = $e->getMessage();
-
-				if ($i < 10)
+				$this->handleCallException($e);
+				if ($i == $this->maxCallTries)
 				{
-					$errorHandlings = [
-						['message' => 'fetching http headers', 'sleep' => 5],
-						['message' => 'cannot find parameter', 'sleep' => 5],
-						['message' => 'looks like we got no XML document', 'sleep' => 5],
-						['message' => 'bad gateway', 'sleep' => 10],
-						['message' => 'service unavailable', 'sleep' => 10],
-						['message' => 'too many requests', 'sleep' => 30],
-					];
-
-					$continue = false;
-					foreach ($errorHandlings as $errorHandling)
-					{
-						if (preg_match('/' . $errorHandling['message'] . '/is', $message))
-						{
-							echo "ERROR - " . $errorHandling['message'] . "\n";
-							if ($errorHandling['sleep'] > 0)
-							{
-								echo 'sleeping ' . $errorHandling['sleep'] . " seconds...\n";
-								sleep($errorHandling['sleep']);
-							}
-							$continue = true;
-						}
-					}
-
-					if ($continue)
-					{
-						continue;
-					}
-
+					throw $e;
 				}
-
-				file_put_contents($this->appConfig->get('app/log_dir') . 'request.xml', ($this->zendSoapClient->getLastRequest()));
-				file_put_contents($this->appConfig->get('app/log_dir') . 'response.xml', ($this->zendSoapClient->getLastResponse()));
-
-				throw $e;
 			}
 		}
-    }
+	}
 
+	private function handleCallException(\Exception $e)
+	{
+		$message = $e->getMessage();
+		$messageHandlers = [
+			['message' => 'fetching http headers', 'sleep' => 5, 'auth' => false],
+			['message' => 'cannot find parameter', 'sleep' => 5, 'auth' => false],
+			['message' => 'looks like we got no XML document', 'sleep' => 5, 'auth' => false],
+			['message' => 'bad gateway', 'sleep' => 10, 'auth' => false],
+			['message' => 'service unavailable', 'sleep' => 10, 'auth' => false],
+			['message' => 'too many requests', 'sleep' => 30, 'auth' => false],
+			['message' => '(token required|invalid token)', 'sleep' => 0, 'auth' => true],
+		];
+		foreach ($messageHandlers as $messageHandler)
+		{
+			if (preg_match('/' . $messageHandler['message'] . '/is', $message))
+			{
+				sleep($messageHandler['sleep']);
+				if ($messageHandler['auth']) $this->auth();
+			}
+		}
+	}
 }

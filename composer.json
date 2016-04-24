@@ -1,18 +1,18 @@
 {
-  "name": "inkl/plenty-api",
-  "description": "plenty api services",
-  "license": "MIT",
-  "authors": [{
-    "name": "Marcus",
-    "email": ""
-  }],
-  "require": {
-    "php": ">= 5.5",
-    "zendframework/zend-soap": "@stable"
-  },
-  "autoload": {
-    "psr-4": {
-      "Inkl\\PlentyApi\\": "src/"
-    }
-  }
+	"name": "inkl/plenty-api",
+	"description": "plenty api services",
+	"license": "MIT",
+	"authors": [{
+		"name": "Marcus",
+		"email": ""
+	}],
+	"require": {
+		"php": ">= 5.5",
+		"zendframework/zend-soap": "@stable"
+	},
+	"autoload": {
+		"psr-4": {
+			"Inkl\\PlentyApi\\": "src/"
+		}
+	}
 }

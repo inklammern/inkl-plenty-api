@@ -1,57 +1,31 @@
 <?php
 
-namespace Plenty\Api\Service;
+namespace Inkl\PlentyApi\Service;
 
-use Plenty\Api\Client\ClientInterface;
-use Psr\Log\LoggerInterface;
-use rock\cache\CacheInterface;
+use Inkl\PlentyApi\Client\ClientInterface;
 
 class PropertyGroupService
 {
 	/** @var ClientInterface */
 	private $client;
-	/** @var CacheInterface */
-	private $cache;
-	/** @var PropertyService */
-	private $propertyService;
-	/** @var LoggerInterface */
-	private $log;
 
 	/**
 	 * PropertyGroupService constructor.
 	 * @param ClientInterface $client
-	 * @param CacheInterface $cache
-	 * @param PropertyService $propertyService
-	 * @param LoggerInterface $log
 	 */
-	public function __construct(ClientInterface $client, CacheInterface $cache, PropertyService $propertyService, LoggerInterface $log)
+	public function __construct(ClientInterface $client)
 	{
 		$this->client = $client;
-		$this->cache = $cache;
-		$this->propertyService = $propertyService;
-		$this->log = $log;
 	}
 
 
 	public function getAll()
 	{
-		$this->log->debug('getting property groups');
-
-		$cacheKey = __CLASS__ . __METHOD__;
-		if ($this->cache->exists($cacheKey))
-		{
-			$propertyGroups = $this->cache->get($cacheKey);
-
-			$this->log->debug(sprintf('found %d property groups (from cache)', count($propertyGroups)));
-
-			return $propertyGroups;
-		}
 
 		$result = $this->client->call('GetPropertyGroups');
 
 		if (!isset($result->Success) || $result->Success != '1' || !isset($result->PropertyGroups->item))
 		{
-			$this->log->debug('failed!');
 			throw new \Exception('property groups failed');
 		}
 
@@ -80,10 +54,6 @@ class PropertyGroupService
 			];
 
 		}
-
-		$this->log->debug(sprintf('found %d property groups', count($propertyGroups)));
-
-		$this->cache->set($cacheKey, $propertyGroups, 3600);
 
 		return $propertyGroups;
 	}

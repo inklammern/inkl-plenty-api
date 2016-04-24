@@ -1,6 +1,6 @@
 <?php
 
-namespace Plenty\Api\Client;
+namespace Inkl\PlentyApi\Client;
 
 interface ClientInterface {
 
