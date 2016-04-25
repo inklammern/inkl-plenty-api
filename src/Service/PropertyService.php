@@ -1,59 +1,42 @@
 <?php
 
-namespace Plenty\Api\Service;
+namespace Inkl\PlentyApi\Service;
 
-use Plenty\Api\Client\ClientInterface;
+use Inkl\PlentyApi\Client\ClientInterface;
 use Psr\Log\LoggerInterface;
-use rock\cache\CacheInterface;
 
 class PropertyService
 {
 	/** @var ClientInterface */
 	private $client;
-	/** @var CacheInterface */
-	private $cache;
 	/** @var LoggerInterface */
-	private $log;
+	private $logger;
 
 	/**
 	 * PropertyService constructor.
 	 * @param ClientInterface $client
-	 * @param CacheInterface $cache
-	 * @param LoggerInterface $log
+	 * @param LoggerInterface $logger
 	 */
-	public function __construct(ClientInterface $client, CacheInterface $cache, LoggerInterface $log)
+	public function __construct(ClientInterface $client, LoggerInterface $logger)
 	{
 		$this->client = $client;
-		$this->cache = $cache;
-		$this->log = $log;
+		$this->logger = $logger;
 	}
 
 
 	public function getAll()
 	{
-		$this->log->debug('getting properties');
-
-		$cacheKey = __CLASS__ . __METHOD__;
-		if ($this->cache->exists($cacheKey))
-		{
-			$properties = $this->cache->get($cacheKey);
-
-			$this->log->debug(sprintf('found %d properties (from cache)', count($properties)));
-
-			return $properties;
-		}
-
 		$properties = [];
 
 		$page = 0;
 		$countPages = 1;
 		while ($page < $countPages)
 		{
-
-			$this->log->debug(sprintf('getting %s', ($page == 0 ? 'first page' : ($page+1) . '/' . $countPages)));
-
 			$result = $this->client->call('GetProperties', ['Page' => $page]);
+
 			$page++;
+
+			$this->logger->debug(sprintf('getting property page %d', $page));
 
 			if (!isset($result->Success) || $result->Success != 1 || !isset($result->Properties->item))
 			{
@@ -64,11 +47,12 @@ class PropertyService
 
 			foreach ($result->Properties->item as $item)
 			{
-
 				$item = (array)$item;
 
 				$id = $item['PropertyID'];
 				$lang = $item['Lang'];
+
+				if (!($item['PropertyGroupID'] > 0)) continue;
 
 				if ($lang != 'de' && $lang != 'fr')
 				{
@@ -89,13 +73,8 @@ class PropertyService
 					'name' => $item['PropertyFrontendName']
 				];
 
-
 			}
 		}
-
-		$this->cache->set($cacheKey, $properties, 3600);
-
-		$this->log->debug(sprintf('found %d properties', count($properties)));
 
 		return $properties;
 	}
