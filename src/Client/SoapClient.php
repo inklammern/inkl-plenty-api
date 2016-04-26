@@ -25,9 +25,12 @@ class SoapClient implements ClientInterface
 	public function connect($userId = '', $userToken = '')
 	{
 		$this->zendSoapClient = new Client($this->wsdl);
+
 		$this->userId = $userId;
 		$this->userToken = $userToken;
+
 		$this->setSoapHeader();
+		$this->checkToken();
 	}
 
 	public function getUserId()
@@ -38,6 +41,18 @@ class SoapClient implements ClientInterface
 	public function getUserToken()
 	{
 		return $this->userToken;
+	}
+
+	private function checkToken()
+	{
+		try {
+			$this->call('GetServerTime');
+		} catch (\Exception $e) {
+
+			if (preg_match('/(token required|invalid token)/is', $e->getMessage())) {
+				$this->auth();
+			}
+		}
 	}
 
 	private function auth()
@@ -93,9 +108,9 @@ class SoapClient implements ClientInterface
 			['message' => 'cannot find parameter', 'sleep' => 5, 'auth' => false],
 			['message' => 'looks like we got no XML document', 'sleep' => 5, 'auth' => false],
 			['message' => 'bad gateway', 'sleep' => 10, 'auth' => false],
+			['message' => 'forbidden', 'sleep' => 10, 'auth' => false],
 			['message' => 'service unavailable', 'sleep' => 10, 'auth' => false],
 			['message' => 'too many requests', 'sleep' => 30, 'auth' => false],
-			['message' => '(token required|invalid token)', 'sleep' => 0, 'auth' => true],
 		];
 		foreach ($messageHandlers as $messageHandler)
 		{
@@ -103,7 +118,11 @@ class SoapClient implements ClientInterface
 			{
 				sleep($messageHandler['sleep']);
 				if ($messageHandler['auth']) $this->auth();
+
+				return;
 			}
 		}
+
+		throw $e;
 	}
 }

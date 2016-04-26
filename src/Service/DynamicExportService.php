@@ -1,27 +1,26 @@
 <?php
 
-namespace Plenty\Api\Service;
+namespace Inkl\PlentyApi\Service;
 
-use League\Flysystem\Exception;
-use Plenty\Api\Client\ClientInterface;
-use Core\Csv\Helper\CsvHelper;
+use Inkl\Csv\Service\StringService as CsvStringService;
+use Inkl\PlentyApi\Client\ClientInterface;
 
 class DynamicExportService {
 
     /** @var ClientInterface */
     private $client;
-    /** @var CsvHelper */
-    private $csvHelper;
+	/** @var CsvStringService */
+	private $csvStringService;
 
-    /**
-     * DynamicExportService constructor.
-     * @param ClientInterface $client
-     * @param CsvHelper $csvHelper
-     */
-    public function __construct(ClientInterface $client, CsvHelper $csvHelper) {
+	/**
+	 * DynamicExportService constructor.
+	 * @param ClientInterface $client
+	 * @param CsvStringService $csvStringService
+	 */
+    public function __construct(ClientInterface $client, CsvStringService $csvStringService) {
         $this->client = $client;
-        $this->csvHelper = $csvHelper;
-    }
+		$this->csvStringService = $csvStringService;
+	}
 
 
     public function exportFormat($formatId, $formatName, $offset = 0, $rowCount = 1000) {
@@ -43,7 +42,7 @@ class DynamicExportService {
             $content .= (string)$item->Value . "\n";
         }
 
-        return $this->csvHelper->stringToArray($content, ';');
+        return $this->csvStringService->toArray($content, ';');
     }
 
 }

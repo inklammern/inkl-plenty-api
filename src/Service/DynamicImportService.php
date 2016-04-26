@@ -1,9 +1,8 @@
 <?php
 
-namespace Plenty\Api\Service;
+namespace Inkl\PlentyApi\Service;
 
-use League\Flysystem\Exception;
-use Plenty\Api\Client\ClientInterface;
+use Inkl\PlentyApi\Client\ClientInterface;
 
 class DynamicImportService {
 

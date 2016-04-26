@@ -44,7 +44,6 @@ class PropertyGroupService
 				$propertyGroups[$id] = [
 					'id' => $id,
 					'name' => $backendName,
-					'properties' => [],
 					'lang' => []
 				];
 			}
@@ -54,30 +53,6 @@ class PropertyGroupService
 			];
 
 		}
-
-		return $propertyGroups;
-	}
-
-
-	public function getAllWithProperties()
-	{
-
-		$this->log->debug('getting property groups with properties');
-
-		$propertyGroups = $this->getAll();
-		$properties = $this->propertyService->getAll();
-
-		foreach ($properties as $property)
-		{
-			$propertyGroupId = $property['property_group_id'];
-
-			if (isset($propertyGroups[$propertyGroupId]))
-			{
-				$propertyGroups[$propertyGroupId]['properties'][] = $property;
-			}
-		}
-
-		$this->log->debug(sprintf('found %d property groups with properties', count($propertyGroups)));
 
 		return $propertyGroups;
 	}
