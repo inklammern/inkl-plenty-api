@@ -1,9 +1,8 @@
 <?php
 
-namespace Plenty\Api\Service;
+namespace Inkl\PlentyApi\Service;
 
-use Plenty\Api\Client\ClientInterface;
-use Plenty\Api\Entities\Order;
+use Inkl\PlentyApi\Client\ClientInterface;
 
 class OrderService
 {
@@ -20,35 +19,6 @@ class OrderService
 	}
 
 
-	/**
-	 * @return Order[]
-	 * @throws \Exception
-	 */
-	public function getShipping()
-	{
-		return $this->searchByStatus(6.7);
-	}
-
-
-	/**
-	 * @return Order[]
-	 * @throws \Exception
-	 */
-	public function getInvoiceShipping()
-	{
-		return $this->searchByStatus(6.8);
-	}
-
-
-	/**
-	 * @return Order[]
-	 * @throws \Exception
-	 */
-	public function getInvoiceDropShipping()
-	{
-		return $this->searchByStatus(6.9);
-	}
-
 
 	public function saveStatus($orderId, $status)
 	{
@@ -61,7 +31,7 @@ class OrderService
 	}
 
 
-	private function searchByStatus($status)
+	public function searchByStatus($status)
 	{
 		$result = $this->client->call('SearchOrders', [
 			'OrderStatus' => $status
@@ -83,23 +53,14 @@ class OrderService
 		$orders = [];
 		foreach ($resultOrders as $item)
 		{
-			$orders[] = $this->hydrate($item);
+			$orders[] = [
+				'id' => (string)$item->OrderHead->OrderID,
+				'external_id' => (string)$item->OrderHead->ExternalOrderID,
+				'status' => (string)$item->OrderHead->OrderStatus
+			];
 		}
 
 		return $orders;
-	}
-
-
-	private function hydrate($data) {
-
-		$order = new Order();
-
-		$order
-			->setId((string)$data->OrderHead->OrderID)
-			->setExternalId((string)$data->OrderHead->ExternalOrderID)
-			->setStatus((string)$data->OrderHead->OrderStatus);
-
-		return $order;
 	}
 
 }
