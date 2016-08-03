@@ -35,7 +35,7 @@ class PropertyGroupService
 			$propertyGroupData = (array)$propertyGroupData;
 
 			$id = $propertyGroupData['PropertyGroupID'];
-			$lang = $propertyGroupData['Lang'];
+			$lang = strtolower($propertyGroupData['Lang']);
 			$backendName = $propertyGroupData['BackendName'];
 			$frontendName = $propertyGroupData['FrontendName'];
 

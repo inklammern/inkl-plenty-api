@@ -50,11 +50,11 @@ class PropertyService
 				$item = (array)$item;
 
 				$id = $item['PropertyID'];
-				$lang = $item['Lang'];
+				$lang = strtolower($item['Lang']);
 
 				if (!($item['PropertyGroupID'] > 0)) continue;
 
-				if ($lang != 'de' && $lang != 'fr')
+				if ($lang != 'de' && $lang != 'fr' && $lang != 'es')
 				{
 					continue;
 				}

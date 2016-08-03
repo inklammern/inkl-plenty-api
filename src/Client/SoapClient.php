@@ -109,6 +109,7 @@ class SoapClient implements ClientInterface
 			['message' => 'looks like we got no XML document', 'sleep' => 5, 'auth' => false],
 			['message' => 'bad gateway', 'sleep' => 10, 'auth' => false],
 			['message' => 'forbidden', 'sleep' => 10, 'auth' => false],
+			['message' => 'internal server error', 'sleep' => 10, 'auth' => false],
 			['message' => 'service unavailable', 'sleep' => 10, 'auth' => false],
 			['message' => 'too many requests', 'sleep' => 30, 'auth' => false],
 		];
