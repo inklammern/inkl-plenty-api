@@ -24,7 +24,7 @@ class PropertyService
 	}
 
 
-	public function getAll()
+	public function getAll($langs)
 	{
 		$properties = [];
 
@@ -44,7 +44,6 @@ class PropertyService
 			}
 
 			$countPages = $result->Pages;
-
 			foreach ($result->Properties->item as $item)
 			{
 				$item = (array)$item;
@@ -54,7 +53,7 @@ class PropertyService
 
 				if (!($item['PropertyGroupID'] > 0)) continue;
 
-				if ($lang != 'de' && $lang != 'fr' && $lang != 'es')
+				if (!in_array($lang, $langs))
 				{
 					continue;
 				}
