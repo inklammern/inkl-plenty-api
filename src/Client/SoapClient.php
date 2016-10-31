@@ -88,7 +88,12 @@ class SoapClient implements ClientInterface
 		{
 			try
 			{
-				return $this->zendSoapClient->call($method, [$params]);
+				$result = $this->zendSoapClient->call($method, [$params]);
+
+				$this->checkLimit();
+
+				return $result;
+
 			} catch (\Exception $e)
 			{
 				$this->handleCallException($e);
@@ -99,6 +104,36 @@ class SoapClient implements ClientInterface
 			}
 		}
 	}
+
+
+	private function checkLimit()
+	{
+		$responseHeader = $this->zendSoapClient->getLastResponseHeaders();
+		$responseHeaderLines = explode("\n", $responseHeader);
+
+		$callsLeft = null;
+		$secondsLeft = null;
+		foreach ($responseHeaderLines as $responseHeaderLine)
+		{
+			if (preg_match('/X-Plenty-Soap-Calls-Left: (.*)/', $responseHeaderLine, $result))
+			{
+				$callsLeft = trim($result[1]);
+			}
+			if (preg_match('/X-Plenty-Soap-Seconds-Left: (.*)/', $responseHeaderLine, $result))
+			{
+				$secondsLeft = trim($result[1]);
+			}
+		}
+
+		if (!is_null($callsLeft) && !is_null($secondsLeft))
+		{
+			if ($callsLeft < 10)
+			{
+				sleep($secondsLeft);
+			}
+		}
+	}
+
 
 	private function handleCallException(\Exception $e)
 	{
@@ -111,7 +146,7 @@ class SoapClient implements ClientInterface
 			['message' => 'forbidden', 'sleep' => 10, 'auth' => false],
 			['message' => 'internal server error', 'sleep' => 10, 'auth' => false],
 			['message' => 'service unavailable', 'sleep' => 10, 'auth' => false],
-			['message' => 'too many requests', 'sleep' => 30, 'auth' => false],
+			['message' => 'too many requests', 'sleep' => 601, 'auth' => false],
 		];
 		foreach ($messageHandlers as $messageHandler)
 		{
