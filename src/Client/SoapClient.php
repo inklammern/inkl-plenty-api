@@ -139,7 +139,7 @@ class SoapClient implements ClientInterface
 	{
 		$message = $e->getMessage();
 		$messageHandlers = [
-			['message' => 'fetching http headers', 'sleep' => 10, 'auth' => false],
+			['message' => 'fetching http headers', 'sleep' => 30, 'auth' => false],
 			['message' => 'cannot find parameter', 'sleep' => 5, 'auth' => false],
 			['message' => 'looks like we got no XML document', 'sleep' => 5, 'auth' => false],
 			['message' => 'bad gateway', 'sleep' => 10, 'auth' => false],

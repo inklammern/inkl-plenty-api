@@ -8,7 +8,7 @@
 	}],
 	"require": {
 		"php": ">= 5.5",
-		"zendframework/zend-soap": "@stable",
+		"nategood/httpful": "*",
 		"inkl/csv": "@dev"
 	},
 	"autoload": {

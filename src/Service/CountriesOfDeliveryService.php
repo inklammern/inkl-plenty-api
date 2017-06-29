@@ -4,7 +4,7 @@ namespace Inkl\PlentyApi\Service;
 
 use Inkl\PlentyApi\Client\ClientInterface;
 
-class PropertyGroupService
+class CountriesOfDeliveryService
 {
 	/** @var ClientInterface */
 	private $client;
@@ -18,29 +18,27 @@ class PropertyGroupService
 		$this->client = $client;
 	}
 
-	public function getPage($page = 0)
+	public function getAll()
 	{
-		$result = $this->client->call('GetPropertyGroups', [
-			'Page' => $page
-		]);
+		$result = $this->client->call('GetCountriesOfDelivery');
 
 		if (!isset($result->Success) || $result->Success != '1')
 		{
-			throw new \Exception('property groups failed');
+			throw new \Exception('countries of delivery failed');
 		}
 
-		if (!isset($result->PropertyGroups->item))
+		if (!isset($result->CountriesOfDelivery->item))
 		{
 			return null;
 		}
 
-		$propertyGroups = [];
-		foreach ($result->PropertyGroups->item as $propertyGroupData)
+		$countries = [];
+		foreach ($result->CountriesOfDelivery->item as $country)
 		{
-			$propertyGroups[] = (array)$propertyGroupData;
+			$countries[] = (array)$country;
 		}
 
-		return $propertyGroups;
+		return $countries;
 	}
 
 }
