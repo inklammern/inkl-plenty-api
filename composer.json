@@ -9,6 +9,7 @@
 	"require": {
 		"php": ">= 5.5",
 		"nategood/httpful": "*",
+		"zendframework/zend-soap": "@stable",
 		"inkl/csv": "@dev"
 	},
 	"autoload": {
