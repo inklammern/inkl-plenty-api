@@ -5,7 +5,7 @@ namespace Inkl\PlentyApi\Service;
 use Inkl\PlentyApi\Client\RestClient;
 use Psr\Log\LoggerInterface;
 
-class PropertyService
+class PropertyNameService
 {
 	/** @var LoggerInterface */
 	private $logger;
@@ -23,32 +23,27 @@ class PropertyService
 		$this->client = $client;
 	}
 
-	public function getAll($page = 1, $fromUpdatedAt = null)
+	public function getByPropertyId($propertyId)
 	{
-		$result = $this->client->get('items/properties', [
-			'page' => $page,
-			'itemsPerPage' => 1000,
-			'updatedAt' => $fromUpdatedAt
-		]);
+		$result = $this->client->get(sprintf('items/properties/%d/names', $propertyId));
 
 		if ($result->code !== 200)
 		{
-			throw new \Exception('properties failed');
+			throw new \Exception('property names failed');
 		}
 
-
-		$properties = [];
-		if (isset($result->body->entries))
+		$propertyNames = [];
+		if (isset($result->body))
 		{
-			foreach ($result->body->entries as $property)
+			foreach ($result->body as $propertyName)
 			{
-				$properties[] = (array)$property;
+				$propertyNames[] = (array)$propertyName;
 			}
 		}
 
-		if (count($properties) > 0)
+		if (count($propertyNames) > 0)
 		{
-			return $properties;
+			return $propertyNames;
 		}
 
 		return null;

@@ -2,45 +2,55 @@
 
 namespace Inkl\PlentyApi\Service;
 
-use Inkl\PlentyApi\Client\ClientInterface;
+use Inkl\PlentyApi\Client\RestClient;
+use Psr\Log\LoggerInterface;
 
 class PropertyGroupService
 {
-	/** @var ClientInterface */
+	/** @var LoggerInterface */
+	private $logger;
+	/** @var RestClient */
 	private $client;
 
 	/**
-	 * PropertyGroupService constructor.
-	 * @param ClientInterface $client
+	 * PropertyService constructor.
+	 * @param RestClient $client
+	 * @param LoggerInterface $logger
 	 */
-	public function __construct(ClientInterface $client)
+	public function __construct(RestClient $client, LoggerInterface $logger)
 	{
+		$this->logger = $logger;
 		$this->client = $client;
 	}
 
-	public function getPage($page = 0)
+	public function getAll($page = 1)
 	{
-		$result = $this->client->call('GetPropertyGroups', [
-			'Page' => $page
+		$result = $this->client->get('items/property_groups', [
+			'page' => $page,
+			'itemsPerPage' => 1000
 		]);
 
-		if (!isset($result->Success) || $result->Success != '1')
+		if ($result->code !== 200)
 		{
 			throw new \Exception('property groups failed');
 		}
 
-		if (!isset($result->PropertyGroups->item))
-		{
-			return null;
-		}
 
 		$propertyGroups = [];
-		foreach ($result->PropertyGroups->item as $propertyGroupData)
+		if (isset($result->body->entries))
 		{
-			$propertyGroups[] = (array)$propertyGroupData;
+			foreach ($result->body->entries as $propertyGroup)
+			{
+				$propertyGroups[] = (array)$propertyGroup;
+			}
 		}
 
-		return $propertyGroups;
+		if (count($propertyGroups) > 0)
+		{
+			return $propertyGroups;
+		}
+
+		return null;
 	}
 
 }

@@ -2,43 +2,45 @@
 
 namespace Inkl\PlentyApi\Service;
 
-use Inkl\PlentyApi\Client\ClientInterface;
+use Inkl\PlentyApi\Client\RestClient;
 
 class CountriesOfDeliveryService
 {
-	/** @var ClientInterface */
+	/** @var RestClient */
 	private $client;
 
 	/**
-	 * PropertyGroupService constructor.
-	 * @param ClientInterface $client
+	 * @param RestClient $client
 	 */
-	public function __construct(ClientInterface $client)
+	public function __construct(RestClient $client)
 	{
 		$this->client = $client;
 	}
 
 	public function getAll()
 	{
-		$result = $this->client->call('GetCountriesOfDelivery');
+		$result = $this->client->get('orders/shipping/countries');
 
-		if (!isset($result->Success) || $result->Success != '1')
+		if ($result->code !== 200)
 		{
-			throw new \Exception('countries of delivery failed');
-		}
-
-		if (!isset($result->CountriesOfDelivery->item))
-		{
-			return null;
+			throw new \Exception('orders/shipping/countries failed');
 		}
 
 		$countries = [];
-		foreach ($result->CountriesOfDelivery->item as $country)
+		if (isset($result->body))
 		{
-			$countries[] = (array)$country;
+			foreach ($result->body as $country)
+			{
+				$countries[] = (array)$country;
+			}
 		}
 
-		return $countries;
+		if (count($countries) > 0)
+		{
+			return $countries;
+		}
+
+		return null;
 	}
 
 }

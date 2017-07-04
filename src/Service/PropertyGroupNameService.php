@@ -5,7 +5,7 @@ namespace Inkl\PlentyApi\Service;
 use Inkl\PlentyApi\Client\RestClient;
 use Psr\Log\LoggerInterface;
 
-class PropertyService
+class PropertyGroupNameService
 {
 	/** @var LoggerInterface */
 	private $logger;
@@ -13,7 +13,7 @@ class PropertyService
 	private $client;
 
 	/**
-	 * PropertyService constructor.
+	 * PropertyGroupService constructor.
 	 * @param RestClient $client
 	 * @param LoggerInterface $logger
 	 */
@@ -23,32 +23,27 @@ class PropertyService
 		$this->client = $client;
 	}
 
-	public function getAll($page = 1, $fromUpdatedAt = null)
+	public function getByPropertyGroupId($propertyGroupId)
 	{
-		$result = $this->client->get('items/properties', [
-			'page' => $page,
-			'itemsPerPage' => 1000,
-			'updatedAt' => $fromUpdatedAt
-		]);
+		$result = $this->client->get(sprintf('items/property_groups/%d/names', $propertyGroupId));
 
 		if ($result->code !== 200)
 		{
-			throw new \Exception('properties failed');
+			throw new \Exception('property group names failed');
 		}
 
-
-		$properties = [];
-		if (isset($result->body->entries))
+		$propertyGroupNames = [];
+		if (isset($result->body))
 		{
-			foreach ($result->body->entries as $property)
+			foreach ($result->body as $propertyGroupName)
 			{
-				$properties[] = (array)$property;
+				$propertyGroupNames[] = (array)$propertyGroupName;
 			}
 		}
 
-		if (count($properties) > 0)
+		if (count($propertyGroupNames) > 0)
 		{
-			return $properties;
+			return $propertyGroupNames;
 		}
 
 		return null;
