@@ -2,65 +2,57 @@
 
 namespace Inkl\PlentyApi\Service;
 
-use Inkl\PlentyApi\Client\ClientInterface;
+use Inkl\PlentyApi\Client\RestClient;
 
 class OrderService
 {
-	/** @var ClientInterface */
 	private $client;
 
 	/**
 	 * OrderService constructor.
-	 * @param ClientInterface $client
+	 * @param RestClient $client
 	 */
-	public function __construct(ClientInterface $client)
+	public function __construct(RestClient $client)
 	{
 		$this->client = $client;
 	}
 
-
-
 	public function saveStatus($orderId, $status)
 	{
-
-		$result = $this->client->call('SetOrderStatus', [
-			'OrderStatus' => [['OrderID' => $orderId, 'OrderStatus' => $status]]
+		return $this->client->put(sprintf('orders/%d', $orderId), [
+			'statusId' => $status
 		]);
+	}
 
-		return $result;
+
+	public function getById($orderId)
+	{
+
 	}
 
 
 	public function searchByStatus($status)
 	{
-		$result = $this->client->call('SearchOrders', [
-			'OrderStatus' => $status
+		$result = $this->client->get('orders', [
+			'statusFrom' => $status,
+			'statusTo' => $status,
 		]);
 
-		if (!isset($result->Success) || $result->Success != '1')
-		{
-			throw new \Exception('search orders failed');
-		}
-
-		if (!isset($result->Orders->item))
-		{
-			return [];
-		}
-
-		$resultOrders = $result->Orders->item;
-		if (!is_array($resultOrders)) $resultOrders = [$resultOrders];
-
 		$orders = [];
-		foreach ($resultOrders as $item)
+		if (isset($result->body->entries))
 		{
-			$orders[] = [
-				'id' => (string)$item->OrderHead->OrderID,
-				'external_id' => (string)$item->OrderHead->ExternalOrderID,
-				'status' => (string)$item->OrderHead->OrderStatus
-			];
+			foreach ($result->body->entries as $order)
+			{
+				$orders[] = (array)$order;
+			}
 		}
 
-		return $orders;
+		if (count($orders) > 0)
+		{
+			return $orders;
+		}
+
+		return null;
 	}
 
 }

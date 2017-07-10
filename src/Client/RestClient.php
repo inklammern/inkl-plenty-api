@@ -40,6 +40,16 @@ class RestClient
 		return $response;
 	}
 
+	public function put($method, $params = [])
+	{
+		$response = \Httpful\Request::put(sprintf('%s%s', $this->endpoint, $method), http_build_query($params), Mime::FORM)
+			->addHeader('Authorization', 'Bearer ' . $this->accessToken)
+			->expectsJson()
+			->send();
+
+		return $response;
+	}
+
 	public function get($method, $params = [])
 	{
 		$response = \Httpful\Request::get(sprintf('%s%s?%s', $this->endpoint, $method, http_build_query($params)))
